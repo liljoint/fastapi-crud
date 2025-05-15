@@ -1,36 +1,40 @@
 steps:
-  # Install dependencies
+  # Instala dependencias desde archivo
   - name: python
     entrypoint: pip
     args: ["install", "-r", "requirements.txt", "--user"]
 
-  # Run unit tests
+  # Ejecuta test unitarios
   - name: python
     entrypoint: python
     args: ["-m", "pytest", "--junitxml=${SHORT_SHA}_test_log.xml"] 
 
-  # Docker Build
+  # Compila la imagen y la crea en el repositorio
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 
-           'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/fastapi:${SHORT_SHA}', '.']
+           'southamerica-west1-docker.pkg.dev/${PROJECT_ID}/py-repo/fastapi:${SHORT_SHA}', '.']
 
-  # Docker push to Google Artifact Registry
+  # Sube imagen compilada a Artifact Repository
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push',  'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/fastapi:${SHORT_SHA}']
+    args: ['push',  'southamerica-west1-docker.pkg.dev/${PROJECT_ID}/py-repo/fastapi:${SHORT_SHA}']
 
-  # Deploy to Cloud Run
+  # Implementa la función en Cloud Run
   - name: google/cloud-sdk
-    args: ['gcloud', 'run', 'deploy', 'helloworld-${SHORT_SHA}', 
-           '--image=us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/fastapi:${SHORT_SHA}', 
-           '--region', 'us-central1', '--platform', 'managed', 
+    args: ['gcloud', 'run', 'deploy', 'fastapi-${SHORT_SHA}', 
+           '--image=southamerica-west1-docker.pkg.dev/${PROJECT_ID}/py-repo/fastapi:${SHORT_SHA}', 
+           '--region', 'southamerica-west1', '--platform', 'managed', 
+           '--port', '80',
            '--allow-unauthenticated']
 
-# Save test logs to Google Cloud Storage
+# Guarda archivo de log de pruebas en Cloud Storage
 artifacts:
   objects:
-    location: gs://${_BUCKET_NAME}/
+    location: gs://liljoint-my-files/
     paths:
       - ${SHORT_SHA}_test_log.xml
-# Store images in Google Artifact Registry 
+# Almacena imagen en Google Artifact Registry 
 images:
-  - us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/fastapi:${SHORT_SHA}
+  - southamerica-west1-docker.pkg.dev/${PROJECT_ID}/py-repo/fastapi:${SHORT_SHA}
+
+options:
+  logging: CLOUD_LOGGING_ONLY

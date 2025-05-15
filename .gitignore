@@ -1,2 +1,5 @@
 __pycache__/
 .latamenv
+.pytest_cache
+data.db
+.coverage
